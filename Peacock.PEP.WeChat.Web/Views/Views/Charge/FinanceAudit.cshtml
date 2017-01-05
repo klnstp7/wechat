@@ -1,0 +1,132 @@
+﻿@using Peacock.PEP.WeChat.Model.DTO;
+@{
+    ViewBag.Title = "FinanceAudit";
+    var financeAuditList = (IList<FinanceAuditModel>)ViewBag.FinanceAuditList;
+}
+@if (!financeAuditList.Any())
+{
+    <div class="no-data f-tc font_s_05">暂无应收审批数据</div>
+}
+else
+{
+    foreach (var item in financeAuditList)
+    {
+        <div class="card">
+            <h2 class="card-title border">应收审批</h2>
+            <div class="card-body">
+                <div class="xm-kf">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td style="width:20%" class="f-fwb-title">报告号：</td>
+                            <td style="width:80%" colspan="3" class="f-fwb">@item.ReportNo</td>
+                        </tr>
+                        <tr>
+                            <td style="width:20%" class="f-fwb-title">流水号：</td>
+                            <td style="width:80%" colspan="3" class="f-fwb">@item.ProjectNo</td>
+                        </tr>
+                        <tr>
+                            <td style="width:20%" class="f-fwb-title">应收金额：</td>
+                            <td style="width:30%" class="f-fwb">
+                                @string.Format("{0:F2}元", item.AdjustFee)
+                            </td>
+                            <td style="width:20%" class="f-fwb-title">最低收费：</td>
+                            <td style="width:30%" class="f-fwb">
+                                @string.Format("{0:F2}元", item.StandardFee)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:20%" class="f-fwb-title">实收金额：</td>
+                            <td style="width:30%" class="f-fwb">
+                                @string.Format("{0:F2}元", item.ActualFee)
+                            </td>
+                            <td style="width:20%" class="f-fwb-title">申请人：</td>
+                            <td style ="width:30%" class="f-fwb">
+                                @item.EmployeeName
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:20%" class="f-fwb-title">申请时间：</td>
+                            <td style="width:80%" class="f-fwb" colspan="3">
+                                @string.Format("{0:yyyy-MM-dd}", item.CreatedDate)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:20%" class="f-fwb-title">小区名称：</td>
+                            <td style ="width:80%" colspan="3" class="f-fwb">@item.ResidentialAreaName</td>
+                        </tr>
+                        <tr>
+                            <td style="width:20%" class="f-fwb-title">项目地址：</td>
+                            <td style="width:80%" colspan="3" class="f-fwb">@item.ResidentialAreaAddress</td>
+                        </tr>
+                        <tr>
+                            <td style="width:20%" class="f-fwb-title">申请理由：</td>
+                            <td style="width:80%" colspan="3" class="f-fwb">@item.PostMessage</td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="f-fwb"><textarea class="reason" placeholder="请输入审核信息" id="msg_@item.TID"></textarea></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="posi-reli groups">
+                    <button type="button" class="notice-btn weui_btn weui_btn_gren font_s_1" data-id="@item.TID">通过</button>
+                    <button type="button" class="notice-btn weui_btn weui_btn_org font_s_1" data-id="@item.TID ">不通过</button>
+                </div>
+
+            </div>
+        </div>
+    }
+
+    <script type="text/javascript">
+        $(function() {
+            //通过
+            $("button.weui_btn_gren").each(function () {
+                $(this).click(function () {
+                    var id = $(this).data("id");
+                    var msg = $('#msg_' + id).val() == "请输入审核信息" ? "" : $('#msg_' + id).val();
+                    ajaxLoading(id, true, msg);
+                });               
+            });
+
+            //不通过
+            $("button.weui_btn_org").each(function () {
+                $(this).click(function() {
+                    var id = $(this).data("id");
+                    var msg = $('#msg_' + id).val();
+                    ajaxLoading(id, false, msg);
+                });
+            });
+        });
+
+        function ajaxLoading(id, pass, msg) {
+            var paras = {};
+            paras.tid = id;
+            paras.isPass = pass;
+            paras.checkMessage = msg;
+            $.ajax({
+                type: 'POST',
+                url: '/Charge/FinanceAuditSumbit',
+                data: paras,
+                dataType: 'json',
+                beforesend: $("#loading").show(),
+                success: function(result) {
+                    $("#loading, #dialogsend, #actual-edit-dialog").hide();
+                    if (result.Success == true) {
+                        layer.open({
+                            content: "操作成功",
+                            time: 2,
+                            success: function() {
+                                getIndex("/Charge/FinanceAudit");
+                            }
+                        });
+                    } else {
+                        layer.open({ content: result.Msg, time: 2 });
+                    }
+                },
+                error: function() {
+                    $("#loading, #dialogsend, #actual-edit-dialog").hide();
+                    layer.open({ content: '网络异常,请稍后再试!' });
+                }
+            });
+        }
+    </script>
+}

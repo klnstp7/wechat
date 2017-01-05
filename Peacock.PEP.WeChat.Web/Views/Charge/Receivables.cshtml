@@ -1,0 +1,349 @@
+﻿@using Peacock.PEP.WeChat.Model.DTO;
+@using Peacock.PEP.WeChat.Model.Enum;
+@{
+    Layout = null;
+    var chargeList = (IList<ChargeModel>)ViewBag.ChargeList;
+}
+@if (!chargeList.Any())
+{
+    <div class="no-data f-tc font_s_05">暂无收费确认数据</div>
+}
+else
+{
+    foreach (var chargeModel in chargeList)
+    {
+        <div class="card">
+            <h2 class="card-title border">收费确认</h2>
+            <div class="card-body">
+                <div class="xm-kf">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td>报告号：</td>
+                            <td colspan="3" class="f-fwb">@chargeModel.ReportNo</td>
+                        </tr>
+                        <tr>
+                            <td>流水号：</td>
+                            <td colspan="3" class="f-fwb">@chargeModel.ProjectNo</td>
+                        </tr>
+                        <tr>
+                            <td width="25%">客户姓名：</td>
+                            <td width="25%" class="f-fwb">@chargeModel.CustomerName</td>
+                            <td width="25%">客户手机：</td>
+                            <td width="25%" class="f-fwb">@chargeModel.CustomerMobile</td>
+                        </tr>
+
+                        <tr>
+                            <td>项目类型：</td>
+                            <td class="f-fwb">@chargeModel.ItemType</td>
+                            <td>项目分类：</td>
+                            <td class="f-fwb">@chargeModel.ReportType</td>
+                        </tr>
+                        <tr>
+                            <td>应收金额：</td>
+                            <td class="f-fwb">
+                                <span class="standard">
+                                    @string.Format("{0:F2}", chargeModel.AdjustFee)
+                                </span>元
+                                @if (ViewBag.ModifyFee && chargeModel.FeeModifyAuth)
+                                {
+                                    <i class="fa fa-edit adjust" style="color:#333;font-size: 1em" data-adjust="{'projectid':'@chargeModel.ProjectId','AdjustFee':'@string.Format("{0:F2}",chargeModel.AdjustFee)'}"></i>
+                                }
+                            </td>
+                            <td>最低收费：</td>
+                            <td class="f-fwb">
+                                <span class="standard">@string.Format("{0:F2}", chargeModel.StandardFee)</span> 元
+                                @if (ViewBag.ModifyFee  && chargeModel.FeeModifyAuth)
+                                {
+                                    <i class="fa fa-edit standard" style="color:#333;font-size: 1em" data-standard="{'projectid':'@chargeModel.ProjectId','standardfee':'@string.Format("{0:F2}",chargeModel.StandardFee)'}"></i>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>免收金额：</td>
+                            <td class="f-fwb">@string.Format("{0:F2}", chargeModel.FreeFee) 元</td>
+                            <td>实收金额：</td>
+                            <td class="f-fwb">@string.Format("{0:F2}", chargeModel.ActualFee) 元</td>
+                        </tr>
+                        <tr>
+                            <td>项目地址：</td>
+                            <td colspan="3" class="f-fwb">@chargeModel.ResidentialAreaAddress</td>
+                        </tr>
+
+                    </table>
+                </div>
+                <div class="posi-reli groups">
+                    @if (chargeModel.FeeModifyAuth)
+                    {
+                         <button type="button" class="notice-btn weui_btn weui_btn_gren font_s_1" data-projectid="@chargeModel.ProjectId">确认收费</button>
+                    }                   
+                    @if (ViewBag.FinanceApply&&chargeModel.FeeModifyAuth)
+                    {
+                        <button type="button" class="notice-btn weui_btn weui_btn_org font_s_1" data-projectid="@chargeModel.ProjectId">应收申请</button>
+                    }                    
+                </div>
+
+            </div>
+        </div>
+    }
+
+     <input type="hidden" id="projectid" name="projectid" />
+    <!--修改应收金额-->
+    <div class="weui_dialog_alert" id="actual-edit-dialog" style="display: none;z-index:100">
+        
+        <div class="weui_mask" style="z-index:101"></div>
+        <div class="weui_dialog" style="z-index:102;width:70%;">
+            <div class="weui_dialog_hd tbgreen"><strong class="weui_dialog_title tbleft">修改应收金额</strong></div>
+            <div class="weui_dialog_bd weui_text mar_t_1 tx_l">当前金额：<span id="curentactualmoney"></span>元</div>
+            <div class="weui_dialog_bd weui_text mar_t_1 tx_l">修改金额：<input type="text" name="actualmoney" id="actualmoney" class="money" />元</div>
+            <div class="weui_dialog_ft weui_bottom">
+                <div class="btn_fixed">
+                    <div class="btn_fix_0 btn_blok">
+                        <div class="btn_two mar_r_bf_4">
+                            <a href="javascript:;" class="weui_btn weui_btn_gren font_s_08 mar_l_15" id="actual-edit-send" name="send">确定</a>
+                        </div>
+                        <div class="btn_two">
+                            <a href="javascript:;" class="weui_btn weui_btn_org font_s_08 mar_r_15" id="actual-edit-cancel" name="cancel">取消</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--修改最低收费-->
+    <div class="weui_dialog_alert" id="edit-dialog" style="display: none;z-index:100">        
+        <div class="weui_mask" style="z-index:101"></div>
+        <div class="weui_dialog" style="z-index:102;width:70%;">
+            <div class="weui_dialog_hd tbgreen"><strong class="weui_dialog_title tbleft">修改最低收费</strong></div>
+            <div class="weui_dialog_bd weui_text mar_t_1 tx_l">当前最低收费：<span id="curentlowmoney"></span>元</div>
+            <div class="weui_dialog_bd weui_text mar_t_1 tx_l">修改最低收费：<input type="text" name="lowmoney" id="lowmoney" class="money" />元</div>
+            <div class="weui_dialog_ft weui_bottom">
+                <div class="btn_fixed">
+                    <div class="btn_fix_0 btn_blok">
+                        <div class="btn_two mar_r_bf_4">
+                            <a href="javascript:;" class="weui_btn weui_btn_gren font_s_08 mar_l_15" id="edit-send" name="send">确定</a>
+                        </div>
+                        <div class="btn_two">
+                            <a href="javascript:;" class="weui_btn weui_btn_org font_s_08 mar_r_15" id="edit-cancel" name="cancel">取消</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--应收金额申请-->
+    <div class="weui_dialog_alert" id="apply-dialog" style="display: none;z-index:100">        
+        <div class="weui_mask" style="z-index:101"></div>
+        <div class="weui_dialog" style="z-index:102;width:70%;">
+            <div class="weui_dialog_hd tbgreen"><strong class="weui_dialog_title tbleft">应收金额申请</strong></div>
+            <div class="weui_dialog_bd weui_text mar_t_1 tx_l">申请理由</div>
+            <div class="weui_dialog_bd weui_text tx_l"><textarea class="reason"  id="ApplyReason" name="ApplyReason"></textarea></div>
+            <div class="weui_dialog_bd weui_text tx_l">审批人</div>
+             <div class="weui_dialog_bd weui_text tx_l">
+            <div class="weui-cell weui-cell_select">
+                <div class="weui-cell_bd">
+                    <select class="weui-select font_s_1" id="CheckId" name="CheckId">
+                        @foreach (var item in ViewBag.CheckUsers)
+                        {
+                            <option value="@item.UserName">@item.UserName</option>
+                        }               
+                    </select>
+                </div>
+            </div>     
+         </div>                         
+                 <div class="weui_dialog_ft weui_bottom">
+                <div class="btn_fixed">
+                    <div class="btn_fix_0 btn_blok">
+                        <div class="btn_two mar_r_bf_4">
+                            <a href="javascript:;" class="weui_btn weui_btn_gren font_s_08 mar_l_15" id="apply-submit" name="send">提交</a>
+                        </div>
+                        <div class="btn_two">
+                            <a href="javascript:;" class="weui_btn weui_btn_org font_s_08 mar_r_15" id="apply-cancel" name="cancel">取消</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(function() {
+            $("#result-msg").hide();
+
+            //确认按钮点击事件
+            $(".notice-btn.weui_btn_gren").each(function() {
+                $(this).click(function() {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/Charge/Confirm',
+                        data: { projectId: $(this).data("projectid") },
+                        dataType: 'json',
+                        beforesend: $("#loading").show(),
+                        success: function(result) {
+                            $("#loading").hide();
+                            if (result.Success == true) {
+                                layer.open({
+                                    content: "操作成功！",
+                                    time: 2,
+                                    success: function() {
+                                        getIndex("/Charge/Receivables");
+                                    }
+                                });
+
+                            } else {
+                                layer.open({ content: result.Msg, time: 2 });
+                            }
+                        },
+                        error: function() {
+                            $("#loading, #dialogsend, #actual-edit-dialog").hide();
+                            layer.open({ content: '网络异常,请稍后再试!', time: 2 });
+                        }
+                    });
+                });
+            });
+
+            //修改应收金额弹窗
+            $(".adjust").each(function() {
+                $(this).click(function() {
+                    //赋值
+                    var adjustvalue = $(this).data("adjust").replace(/'/g, "\"");
+                    var adjustdata = $.parseJSON(adjustvalue);
+                    $("#projectid").val(adjustdata.projectid);
+                    $("#curentactualmoney").text(adjustdata.AdjustFee);
+                    $("#actualmoney").val("");
+                    $("#actual-edit-dialog").show();
+                });
+            });
+
+            //修改最低收费弹窗
+            $(".standard").each(function() {
+                $(this).click(function() {
+                    //赋值
+                    var standardvalue = $(this).data("standard").replace(/'/g, "\"");
+                    var standarddata = $.parseJSON(standardvalue);
+                    $("#projectid").val(standarddata.projectid);
+                    $("#curentlowmoney").text(standarddata.standardfee);
+                    $("#lowmoney").val("");
+                    $("#edit-dialog").show();
+                });
+            });
+
+            //应收金额申请弹窗
+            $(".notice-btn.weui_btn_org").each(function() {
+                $(this).click(function () {
+                    //赋值
+                    $("#projectid").val($(this).data("projectid"));
+                    $("#ApplyReason").val("");
+                    $("#apply-dialog").show();
+                });
+            });
+
+            $('#actual-edit-dialog').find('.weui_mask').on('click', function () {
+                $('#actual-edit-dialog').hide();
+            });
+            $('#actual-edit-cancel').on('click', function () {
+                $('#actual-edit-dialog').hide();
+            });
+
+            $('#edit-dialog').find('.weui_mask').on('click', function () {
+                $('#edit-dialog').hide();
+            });
+            $('#edit-cancel').on('click', function () {
+                $('#edit-dialog').hide();
+            });
+            $('#apply-dialog').find('.weui_mask').on('click', function () {
+                $('#apply-dialog').hide();
+            });
+            $('#apply-cancel').on('click', function () {
+                $('#apply-dialog').hide();
+            });
+
+            //应收金额保存
+            $("#actual-edit-send").on('click', function () {
+                saveChange('adjust');
+            });
+
+            //最低收费保存
+            $("#edit-send").on('click', function () {
+                saveChange('standard');
+            });          
+
+            //应收金额申请
+            $("#apply-submit").on('click', function () {
+                saveChange('apply');
+            });
+        });
+
+        //保存
+        function saveChange(type) {
+            var projectid = $("#projectid").val();
+            var url = "";
+            var _obj = {};
+            _obj.projectid = projectid;
+            var val;
+            switch (type) {
+                case 'adjust':
+                    url = '/Charge/UpdateAdjustFee';
+                    val = $("#actualmoney").val();
+                    if (/^(?!0+(?:\.0+)?$)(?:[1-9]\d*|0)(?:\.\d{1,2})?$/.test(val) == false || val.length==0) {
+                        layer.open({ content: '请输入正确的价格,最多两位小数!', time: 2 });
+                        return;
+                    } else {
+                        _obj.adjustFee = val;
+                    }
+                    break;
+                case 'standard':
+                    url = '/Charge/UpdateStandardFee';
+                    val = $("#lowmoney").val();
+                    if (/^(?!0+(?:\.0+)?$)(?:[1-9]\d*|0)(?:\.\d{1,2})?$/.test(val) == false || val.length == 0) {
+                        layer.open({ content: '请输入正确的价格,最多两位小数!', time: 2 });
+                        return;
+                    } else {
+                        _obj.standardFee = val;
+                    }
+                    break;
+                case 'apply':
+                    url = '/Charge/FinanceApply';
+                    if ($("#CheckId").val().length == 0) {
+                        layer.open({ content: '审批人不能为空!', time: 2 });
+                        return;
+                    }
+                    _obj.ApplyReason = $("#ApplyReason").val();
+                    _obj.CheckName=$("#CheckId").val() ;
+                    break;
+                default:
+                    break;
+            }
+            ajaxLoading(type,url, _obj);
+        }
+
+        //请求后台
+        function ajaxLoading(type,url, data) {
+            $.ajax({
+                type: 'POST',
+                url: url,
+                data: data,
+                dataType: 'json',
+                beforesend: $("#loading").show(),
+                timeout: 10000,
+                success: function (result) {
+                    $("#loading, #dialogsend, #actual-edit-dialog,#apply-dialog").hide();
+                    if (result.Success == true) {
+                        layer.open({
+                            content: '操作成功！',
+                            time: 2,
+                            success: function() {
+                                getIndex("/Charge/Receivables");
+                            }
+                        });
+                    } else {
+                        layer.open({ content: result.Msg, time: 2 });
+                    }
+                },
+                error: function () {
+                    $("#loading, #dialogsend, #actual-edit-dialog,#apply-dialog").hide();
+                    layer.open({ content: '网络异常,请稍后再试!' });
+                }
+            });
+        }
+
+    </script>
+}

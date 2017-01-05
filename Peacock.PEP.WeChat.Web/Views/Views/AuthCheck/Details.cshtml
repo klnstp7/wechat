@@ -1,0 +1,104 @@
+﻿@using Peacock.PEP.WeChat.Model.DTO;
+@using System.Configuration;
+@{
+    ViewBag.Title = "真伪查询";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ReportModel report = (ReportModel)ViewBag.Report;
+}
+<div class="hd">
+    <h1 class="page_title">@report.companyname</h1>
+    <article class="page_title">
+        <h1>报告真伪查询结果</h1>
+    </article>
+    <div class="weui_cells">
+        <div class="weui_cell">
+            <div class="weui_cell_hd">
+                报告编号
+            </div>
+            <div class="weui_cell_bd weui_cell_primary">
+                <p>@report.reportNum</p>
+            </div>
+        </div>
+        <div class="weui_cell">
+            <div class="weui_cell_hd">
+                项目位置
+            </div>
+            <div class="weui_cell_bd weui_cell_primary">
+                <p>@report.address</p>
+            </div>
+        </div>
+        <div class="weui_cell">
+            <div class="weui_cell_hd">
+                委托方
+            </div>
+            <div class="weui_cell_bd weui_cell_primary">
+                <p>@report.evalEntrust</p>
+            </div>
+        </div>
+        <div class="weui_cell">
+            <div class="weui_cell_hd">
+                总价
+            </div>
+            <div class="weui_cell_bd weui_cell_primary">
+                <p>@string.Format("{0}万元", report.evaluateTotal)</p>
+            </div>
+        </div>
+        <div class="weui_cell">
+            <div class="weui_cell_hd">
+                单价
+            </div>
+            <div class="weui_cell_bd weui_cell_primary">
+                <p>@string.Format("{0}元", report.official?report.price:report.pePrice)</p>
+            </div>
+
+        </div>
+        <div class="weui_cell">
+            <div class="weui_cell_hd">
+                建成年代
+            </div>
+            <div class="weui_cell_bd weui_cell_primary">
+                <p>@string.Format("{0}年", @report.buildedYear)</p>
+            </div>
+
+        </div>
+        <div class="weui_cell">
+            <div class="weui_cell_hd">
+                产权性质
+            </div>
+            <div class="weui_cell_bd weui_cell_primary">
+                <p>@report.property</p>
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(report.physicalChange))
+        {            
+            <div class="weui_cell">
+                <div class="weui_cell_hd">
+                    物理结构是否变化
+                </div>
+                <div class="weui_cell_bd weui_cell_primary">
+                    <p>@report.physicalChange</p>
+                </div>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(report.presentStatus))
+        {
+            <div class="weui_cell">
+                <div class="weui_cell_hd">
+                    使用现状
+                </div>
+                <div class="weui_cell_bd weui_cell_primary">
+                    <p>@report.presentStatus</p>
+                </div>
+            </div>
+        }       
+    </div>
+    @{
+        //大地特殊需求
+        string otherLinkCompany = string.Format("{0}", ConfigurationManager.AppSettings["OtherLinkCompany"]);
+        string otherLinkUrl = string.Format("{0}", ConfigurationManager.AppSettings["OtherLinkUrl"]);
+        if (report.companyname == otherLinkCompany)
+        {
+            <p class="f-tc" style="margin-top:2em;font-size:.75em">到<a href="@otherLinkUrl">机构官网</a>验证真伪</p>
+        }
+    }
+</div>

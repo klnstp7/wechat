@@ -1,0 +1,244 @@
+﻿@using Peacock.PEP.WeChat.Model.DTO
+@using Peacock.PEP.WeChat.Model.Enum;
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="bg_green header f-cf">
+    <div class="f-fr"><a href="javascript:void(0);" class="circle" style=" " id="user"><i class="tx_c fa fa-th"></i></a></div>
+    <div class="header_title">评E评-估值流程与管理系统</div>
+</div>
+<div class="posi-absoltop" id="exited" style="right:0;">
+    <p><span class="tx_c user-text">@ViewBag.UserName</span></p>
+    <div class="wrap-line"></div>
+    <ul>
+        <li class="txt"><a href="/Charge/AboutUS"><span class="f-fl tx_c arrow"><i class="fa fa-users"></i></span><span class="f-fl tx_c text">关于我们</span></a></li>
+        <li class="wrap-line"></li>
+
+    </ul>
+    <div class="wrap-top"></div>
+    <div class="wrap-line"></div>
+    <ul>
+        <li class="txt other" id="quick"><a href="javascript:void(0)"><span class="f-fl tx_c arrow"><i class="fa fa-sign-out"></i></span><span class="f-fl tx_c text">退出登录</span></a></li>
+        <li class="wrap-line"></li>
+    </ul>
+</div>
+
+<div class="search">
+    <div class="search_sr">
+        <input type="text" class="search_input" id="search_input" placeholder="报告号、流水号、客户名称、客户手机" />
+    </div>
+    <a href="javascript:void(0);" class="search_btn" id="search_btn"></a>
+</div>
+<div class="list">
+    <div class="bgcolor" id="bgcolor"></div>
+    <ul id="menu">
+        @foreach (MenuModel menu in ViewBag.MenuList)
+
+               {
+            <li>
+                <a href="javascript:void(0);"  data-url="@menu.Url">@menu.Name</a>
+            </li>
+        }
+    </ul>
+</div>
+<div id="tabswper">
+    <div class="cardlist" id="tab">
+    </div>
+</div>
+<div id="loading" class="weui_loading_toast" style="display: none; z-index:1001">
+    <div class="weui_mask_transparent"></div>
+    <div class="weui_toast">
+        <div class="weui_loading">
+            <div class="weui_loading_leaf weui_loading_leaf_0"></div>
+            <div class="weui_loading_leaf weui_loading_leaf_1"></div>
+            <div class="weui_loading_leaf weui_loading_leaf_2"></div>
+            <div class="weui_loading_leaf weui_loading_leaf_3"></div>
+            <div class="weui_loading_leaf weui_loading_leaf_4"></div>
+            <div class="weui_loading_leaf weui_loading_leaf_5"></div>
+            <div class="weui_loading_leaf weui_loading_leaf_6"></div>
+            <div class="weui_loading_leaf weui_loading_leaf_7"></div>
+            <div class="weui_loading_leaf weui_loading_leaf_8"></div>
+            <div class="weui_loading_leaf weui_loading_leaf_9"></div>
+            <div class="weui_loading_leaf weui_loading_leaf_10"></div>
+            <div class="weui_loading_leaf weui_loading_leaf_11"></div>
+        </div>
+        <p class="weui_toast_content">数据加载中...</p>
+    </div>
+</div>
+<script type="text/javascript">
+    var currentType = '0';
+    var nums = 0, tag = false, _length = 0, _pixlex = 0, arry = [], $container;
+    $(function() {
+        _length = $(".list li").length;
+        $("#tabswper").css('min-height', $(window).height() - 140);
+        init();
+        if (_length !== 0) {
+            $('#tabswper').swipeRight(function() {
+
+                if (nums == (_length - 1)) {
+                    nums = 0;
+                } else {
+                    nums++;
+                }
+                tag = false;
+                mover(nums, tag);
+            });
+
+            $('#tabswper').swipeLeft(function() {
+
+                if (nums == 0) {
+                    nums = _length - 1;
+                } else {
+                    nums--;
+                }
+                tag = true;
+                mover(nums, tag);
+            });
+            $(window).scroll(function() {
+                init();
+            });
+
+            //页签选择
+            $(".list li").each(function() {
+                _pixlex = (100 / _length);
+                if ($(this).find("a").hasClass("current")) {
+                    nums = $(this).index();
+                    $("#bgcolor").css('left', nums * _pixlex + '%');
+                }
+                $(this).click(function() {
+                    nums = $(this).index();
+                    $(".list li a").removeClass("current");
+                    $("#bgcolor").animate({ left: nums * _pixlex + '%' });
+                    $(this).find("a").addClass("current");
+                    _post(nums);
+                });
+
+            });
+
+            //查询
+            $("#search_btn").click(function() {
+
+                for (var i = 0; i < $(".list li").length; i++) {
+                    if ($(".list li").eq(i).find("a").hasClass('current')) {
+                        _post(i);
+                    }
+                }
+            });
+
+            //默认加载我的任务
+            _post(currentType);
+            $(".list li").eq(0).find("a").addClass("current");
+        }
+
+        $(".header").on('click', '#user', function (event) {
+            if ($('#user i').hasClass("fa-th")) {
+                $('#exited').height(getHeight()).show();
+                $("#user i").removeClass("fa-th").addClass("fa-list");
+                return false;
+            } else {
+                init();
+            }
+        });
+
+        //退出
+        $("#quick").click(function () {
+            $.ajax({
+                type: 'POST',
+                url: '/User/Logout',
+                data: null,
+                dataType: 'json',
+                success: function (result) {
+                    if (result.Success == true) {
+                        self.location.replace('/User/Login');
+                    }
+                },
+                error: function () {
+                    layer.open({ content: '网络异常,请稍后再试!' });
+                }
+            });
+            init();
+        });
+    });
+
+    //获取列表数据
+    function _post(type) {
+        type = Number(type) + 1;
+        var tab = $("#tab");
+        tab.html("");
+        var content = $.trim($("#search_input").val());
+        currentType = type;
+        var url = "";
+        url = arry[type-1];
+        $.ajax({
+            url: url,
+            type: 'POST',
+            beforesend: $("#loading").show(),
+            data: { condition: content},
+            success: function(result) {
+                tab.html(result);
+                $("#loading").hide();
+            },
+            error: function() {
+                $("#loading").hide();
+                layer.open({ content: '网络异常,请稍后再试!' });
+            }
+        });
+    }
+
+    //滑动
+    function mover(nums, tag) {
+        if (nums > -1 && nums < _length && tag == false) {
+            var obeject = $(".list li a").eq(nums);
+            $("#bgcolor").animate({ left: nums * _pixlex + '%' });
+            $(".list li a").removeClass("current");
+            obeject.addClass("current");
+        }
+        if (nums > -1 && nums < _length && tag == true) {
+            var obeject2 = $(".list li a").eq(nums);
+            $("#bgcolor").animate({ left: nums * _pixlex + '%' });
+            $(".list li a").removeClass("current");
+            obeject2.addClass("current");
+        }
+        _post(nums);
+        init();
+    }
+
+    //初始化
+    function init() {
+        $("body").width($(window).width());
+        $(".list li").each(function () {
+            var str = "";
+            arry.push(str+$(this).find("a").attr("data-url"));
+            $(this).css({ "width": ($("body").width() / _length) });
+        });
+        $("#bgcolor").css({ "width": ($("body").width() / _length) });
+        $('#exited').hide();
+        $('#user i').removeClass("fa-list").addClass("fa-th");
+        getHeight();
+    }
+
+    //获取高度
+    function getHeight() {
+        var clientHeight = $(window).height();
+        var bodyHeight = $("body").height();
+        var hheight = $('.header').height();
+        var _height = 0;
+        if (clientHeight >= bodyHeight) {
+            _height = clientHeight;
+        } else {
+            _height = bodyHeight;
+        }
+        _height = _height - hheight;
+        return _height;
+    }
+
+    function getIndex(val) {        
+        for (var i = 0; i < arry.length; i++) {
+            if (val == arry[i]) {
+                _post(i);
+                break;
+            }
+        }
+    }
+</script>

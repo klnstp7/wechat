@@ -1,0 +1,110 @@
+﻿@using Peacock.PEP.WeChat.Model.DTO;
+@{
+    ViewBag.Title = "ThreeAudit";
+    var projectAuditList = (IList<ProjectAuditModel>)ViewBag.ProjectAuditList;
+}
+
+@if (!projectAuditList.Any())
+{
+    <div class="no-data f-tc font_s_05">暂无项目三审数据</div>
+}
+else
+{
+    foreach (var item in projectAuditList)
+    {
+
+        <div class="card">
+            <h2 class="card-title border">项目三审</h2>
+            <div class="card-body">
+                <div class="xm-kf">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td style="width:20%" class="f-fwb-title">报告号：</td>
+                            <td style="width:80%"  colspan="3" class="f-fwb">@item.ReportNo</td>
+                        </tr>
+                        <tr>
+                            <td class="f-fwb-title">流水号：</td>
+                            <td colspan="3" class="f-fwb">@item.ProjectNo</td>
+                        </tr>
+                        <tr>                            
+                            <td style="width:20%" class="f-fwb-title">紧急程度：</td>
+                            <td style="width:30%" class="f-fwb">
+                                @item.PriorityLevel
+                            </td>     
+                            <td style="width:20%" class="f-fwb-title">报告类型：</td>
+                            <td style="width:30%" class="f-fwb">
+                                @item.ReportCategory
+                            </td>                      
+                        </tr>
+                        <tr>
+                            <td style="width:20%" class="f-fwb-title">小区名称：</td>
+                            <td style="width:80%" class="f-fwb" colspan="3">
+                                @item.ResidentialAreaName
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:20%" class="f-fwb-title">项目地址：</td>
+                            <td style="width:80%" colspan="3" class="f-fwb">@item.ResidentialAreaAddress</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="posi-reli groups">
+                    <button type="button" class="notice-btn weui_btn weui_btn_gren font_s_1" data-projectno="@item.ProjectNo">通过</button>
+                    <button type="button" class="notice-btn weui_btn weui_btn_org font_s_1" data-projectno="@item.ProjectNo">不通过</button>
+                </div>
+
+            </div>
+        </div>
+    }
+
+    <script type="text/javascript">
+        $(function() {
+            //通过
+            $("button.weui_btn_gren").each(function () {
+                $(this).click(function () {
+                    var projectno = $(this).data("projectno");
+                    ajaxLoading(projectno, true);
+                });             
+            });
+
+            //不通过
+            $("button.weui_btn_org").each(function () {
+                $(this).click(function() {
+                    var projectno = $(this).data("projectno");
+                    ajaxLoading(projectno, false);
+                });
+            });
+        });
+
+        function ajaxLoading(projectno, ispass) {
+            $.ajax({
+                type: 'POST',
+                url: '/Charge/ProjectAuditSumbit',
+                data: { projectNo: projectno, isPass: ispass },
+                dataType: 'json',
+                beforesend: $("#loading").show(),
+                //timeout: 10000,
+                success: function(result) {
+                    $("#loading, #dialogsend, #actual-edit-dialog").hide();
+                    if (result.Success == true) {
+                        layer.open({
+                            content: "操作成功",
+                            time: 2,
+                            success: function () {
+                                getIndex("/Charge/ThreeAudit");
+                            }
+                        });
+                    } else {
+                        layer.open({ content: result.Msg, time: 2 });
+                    }
+                },
+                error: function() {
+                    $("#loading, #dialogsend, #actual-edit-dialog").hide();
+                    layer.open({ content: '网络异常,请稍后再试!' });
+                }
+            });
+        }
+    </script>
+}
+
+

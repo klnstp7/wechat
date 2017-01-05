@@ -1,0 +1,295 @@
+﻿@using Peacock.PEP.WeChat.Model.DTO;
+@using Peacock.PEP.WeChat.Model.Enum;
+@{
+    Layout = null;
+    var chargeList = (List<ChargeModel>)ViewBag.ChargeList;
+}
+@if (!chargeList.Any())
+{
+    <div class="no-data f-tc font_s_05">暂无项目反馈数据</div>
+}
+else
+{
+    foreach (var chargeModel in chargeList)
+    {
+        <div class="card">
+            <h2 class="card-title border">项目反馈</h2>
+            <div class="card-body">
+                <div class="xm-kf">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td>报告号：</td>
+                            <td colspan="3" class="f-fwb">@chargeModel.ReportNo</td>
+                        </tr>
+                        <tr>
+                            <td>流水号：</td>
+                            <td colspan="3" class="f-fwb">@chargeModel.ProjectNo</td>
+                        </tr>
+                        <tr>
+                            <td width="25%">客户姓名：</td>
+                            <td width="25%" class="f-fwb">@chargeModel.CustomerName</td>
+                            <td width="25%">客户手机：</td>
+                            <td width="25%" class="f-fwb">@chargeModel.CustomerMobile</td>
+                        </tr>
+
+                        <tr>
+                            <td>项目类型：</td>
+                            <td class="f-fwb">@chargeModel.ItemType</td>
+                            <td>项目分类：</td>
+                            <td class="f-fwb">@chargeModel.ReportType</td>
+                        </tr>
+                        <tr>
+                            <td>建筑面积：</td>
+                            <td class="f-fwb">@string.Format("{0:F2}", chargeModel.BuildingArea)</td>
+                            <td>收费方式：</td>
+                            <td class="f-fwb">@chargeModel.PaymentType</td>
+                        </tr>
+                        <tr>
+                            <td>最低收费：</td>
+                            <td class="f-fwb">@string.Format("{0:F2}", chargeModel.StandardFee)</td>
+                            <td>应收金额：</td>
+                            <td class="f-fwb">@string.Format("{0:F2}", chargeModel.AdjustFee)</td>
+                        </tr>
+                        <tr>
+                            <td>项目地址：</td>
+                            <td colspan="3" class="f-fwb">@chargeModel.ResidentialAreaAddress</td>
+                        </tr>
+                        <tr>
+                            <td>通知状态：</td>
+                            <td colspan="3" class="f-fwb">
+                                <span>
+                                    @if (!(chargeModel.CustFeedBack.HasValue == true && chargeModel.CustFeedBack.Value == true))
+                                    {
+                                        <text>未处理</text>
+                                    }
+                                    else
+                                    {
+                                        <text>@string.Format("已处理 {0:yyyy-MM-dd HH:mm:ss}", chargeModel.CustFeedBackDate)</text>
+                                    }
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="posi-reli tx_c">
+                    <button type="button" class="notice-btn weui_btn weui_btn_gren font_s_1" data-customer="{'username':'@chargeModel.CustomerName','userphone':'@chargeModel.CustomerMobile','projectid':'@chargeModel.ProjectId'}">短信通知</button>
+                </div>
+                <h2 class="card-title clear"><i class="fa fa-chevron-down pull-right"></i>反馈信息</h2>
+                @{
+                    IList<FeedBackModel> feedBackList = chargeModel.FeedBackList;
+                    int count = feedBackList.Where(x => (int) x.SendType == (int) SendTypeFlag.App).Count();
+                    DateTime maxFeedBackDate;
+                    if (count == 0)
+                    {
+                        maxFeedBackDate = feedBackList.Where(x => (int) x.SendType == (int) SendTypeFlag.短信).Max(x => x.CreatedDate);
+                    }
+                    else
+                    {
+                        maxFeedBackDate = feedBackList.Where(x => (int) x.SendType == (int) SendTypeFlag.App).Max(x => x.CreatedDate);
+                    }
+                    FeedBackModel topRow = feedBackList.Where(x => x.CreatedDate == maxFeedBackDate).FirstOrDefault();
+                    IList<FeedBackModel> otherRows = feedBackList.Where(x => x.TID != topRow.TID).OrderByDescending(x => x.CreatedDate).ToList();
+                }
+                <div class="info">
+                    <div class="info-body">
+                        @if (topRow != null)
+                        {
+                            <div class="weui_cells weui_cells_checkbox">
+                                <label class="weui_cell weui_check_label" for="@string.Format("s{0}", topRow.TID)">
+                                    <div class="weui_cell_bd weui_cell_primary">
+                                        <p>@topRow.Operator @string.Format("{0:yyyy-MM-dd HH:mm:ss}", topRow.CreatedDate) </p>
+                                        <p>@topRow.Content</p>
+                                    </div>
+                                    <div class="weui_cell_ft">
+                                        <input type="checkbox" class="weui_check" name="checkbox1" id="@string.Format("s{0}", topRow.TID)">
+                                        <i class="weui_icon_checked"></i>
+                                    </div>
+                                </label>
+                            </div>
+                        }
+                        @if (otherRows != null)
+                        {
+                            <div class="other">
+                                @foreach (var row in otherRows)
+                                {
+                                    <div class="weui_cells weui_cells_checkbox">
+                                        <label class="weui_cell weui_check_label" for="@string.Format("s{0}", row.TID)">
+                                            <div class="weui_cell_bd weui_cell_primary">
+                                                <p>@row.Operator @string.Format("{0:yyyy-MM-dd HH:mm:ss}", row.CreatedDate)</p>
+                                                <p>@row.Content</p>
+                                            </div>
+                                            <div class="weui_cell_ft">
+                                                <input type="checkbox" class="weui_check" name="checkbox1" id="@string.Format("s{0}", row.TID)">
+                                                <i class="weui_icon_checked"></i>
+                                            </div>
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    <!--BEGIN dialog2-->
+    <div class="weui_dialog_alert" id="dialog2" style="display: none;z-index:90">
+        <div class="weui_mask" style="z-index:80"></div>
+        <div class="weui_dialog" style="z-index:90">
+            <div class="weui_dialog_hd"><strong class="weui_dialog_title">信息</strong></div>
+            <div class="weui_dialog_bd weui_text">请选择你要反馈的信息！</div>
+            <div class="weui_dialog_ft pd-20">
+                <a href="javascript:void(0);" class="weui_btn weui_btn_gren weui_btn_dialog">确定</a>
+            </div>
+        </div>
+    </div>
+    <!--END dialog2-->
+    <!--BEGIN dialog3-->
+    <div class="weui_dialog_alert" id="dialog3" style="display: none; z-index: 90">
+        <div class="weui_mask" style="z-index:80"></div>
+        <div class="weui_dialog" style="z-index:90">
+            <div class="weui_dialog_hd"></div>
+            <form id="sendfrom">
+                <div class="weui_dialog_bd weui_text">
+                    <table class="sendform">
+                        <tr>
+                            <td style="text-align:left;width:32%;">客户姓名:</td>
+                            <td style="text-align:left;width:68%;"><input type="text" class="weui_input" required name="username" id="username" value="CustomerName" /></td>
+                        </tr>
+                        <tr><td style="text-align:left">客户手机:</td><td><input type="tel" class="weui_input" required name="userphone" value="CustomerMobile" id="userphone" maxlength="11" /></td></tr>
+                        <tr><td style="text-align:left">发送人:</td><td><input type="text" class="weui_input" required name="sender" id="sender" value="@ViewBag.UserName" maxlength="15" /></td></tr>
+                        <tr><td style="text-align:left">发送人公司:</td><td><input type="text" class="weui_input" required name="company" id="company" value="@ViewBag.CompayName" maxlength="50" /></td></tr>
+                        <tr><td colspan="2"><textarea class="text_area" id="content" name="content" maxlength="100"></textarea></td></tr>
+                    </table>
+                </div>
+                <div class="weui_dialog_ft weui_bottom">
+                    <div class="btn_fixed">
+                        <div class="btn_fix_0 btn_blok">
+                            <div class="btn_two mar_r_bf_4">
+                                <input type="hidden" id="projectid" name="projectid" />
+                                <a href="javascript:;" class="weui_btn weui_btn_gren font_s_08 mar_l_15" id="send" name="send">确定</a>
+                            </div>
+                            <div class="btn_two">
+                                <a href="javascript:;" class="weui_btn weui_btn_org font_s_08 mar_r_15" id="cancel" name="cancel">取消</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        var phonenum;
+        $(function () {
+            if ($(".card").length > 0) {
+                $(".card").each(function (i) {
+                    var _obj = $(".card").eq(i).find(".info-body .weui_cells.weui_cells_checkbox");
+                    if (_obj.length > 0) {
+                        _obj.find('input').eq(0).prop("checked", true);
+                        if (_obj.length != 1) {
+                            $(".card").eq(i).find(".info-body .other").hide();
+                        }
+                    }
+                });
+            }
+
+            $(".card-title i").each(function () {
+                $(this).click(function () {
+                    if ($(this).parent().siblings(".info").find(".other").has("div").length > 0) {
+                        $(this).toggleClass("fa-chevron-up");
+                        $(this).parent().siblings(".info").find(".other").toggle();
+                    }
+                });
+            });
+
+            //判断是否选中
+            $(".notice-btn").each(function () {
+                $(this).click(function () {
+                    var _idx = $(this).parent().parent().parent().index();
+                    $("#content").val("");
+                    var obj = $(".card").eq(_idx).find("input:checked");
+                    if (obj.length > 0) {
+                        var str = "";
+                        obj.each(function (i) {
+                            $(this).parent().siblings().find("p").each(function (index, obj) {
+                                if (index != 0) {
+                                    str += (i + 1) + "、" + $(this).text() + ";";
+                                }
+                            });
+
+                        });
+                        $("#content").val(str.substr(0, 100));
+                        //有选中
+                        init();
+                        //赋值
+                        var customervalue = $(this).data("customer").replace(/'/g, "\"");
+                        var customerdata = $.parseJSON(customervalue);
+                        $("#username").val(customerdata.username);
+                        $("#userphone").val(customerdata.userphone);
+                        $("#projectid").val(customerdata.projectid);
+
+                        $('#dialog3').show();
+                        $('#dialog3').find('#cancel').on('click', function () {
+                            $('#dialog3').hide();
+                        });
+                    } else {
+                        init();
+                        $('#dialog2').show();
+                        $('#dialog2').find('.weui_btn_dialog').on('click', function () {
+                            $('#dialog2').hide();
+                        });
+                    }
+                });
+            });
+            //发送
+            $('#dialog3').find('#send').on('click', function () {
+                var $username = $("#username").val();
+                var $phonenum = $("#userphone").val();
+                if ($username == "" || $phonenum == "") {
+                    layer.open({ content: '请填入发送人和手机号!', time: 2 });
+                    return;
+                }
+                if ($phonenum.length != 11 || /(((13[0-9]{1})|(15[0-9]{1})|(18[0-9]{1}))+\d{8})$/.test($phonenum) == false) {
+                    layer.open({ content: '请输入正确的手机号!', time: 2 });
+                    return;
+                }
+                var $content = $("#content").val();
+                if ($content.length > 100) {
+                    layer.open({ content: '发送的字符串大于100!', time: 2 });
+                    return;
+                }
+                $.ajax({
+                    url: '/Charge/SendSMS',
+                    type: 'POST',               
+                    beforesend: $("#loading").show(),
+                    data: { username: $username, phones: $phonenum, content: $content, projectId: $("#projectid").val() },
+                    success: function (result) {
+                        $("#loading,#dialog3").hide();
+                        if (result.Success) {
+                            layer.open({
+                                content: '操作成功!',
+                                time:2,
+                                success: function () {
+                                    getIndex("/Charge/FeedbackDetails");
+                                    //_post(@((int)ChargeEnum.反馈项目-1));
+                                }
+                            });
+                        } else {
+                            layer.open({ content: result.Msg + '!', time: 2, });
+                        }
+                    },
+                    error: function() {
+                        $("#loading,#dialog3").hide();
+                        layer.open({ content: '网络异常,请稍后再试!', time: 2 });
+                    }               
+                });
+            });
+            $('#dialog2').find('.weui_mask').on('click', function () {
+                $('#dialog2').hide();
+            });
+            $('#dialog3').find('.weui_mask').on('click', function () {
+                $('#dialog3').hide();
+            });
+        });
+    </script>
+}

@@ -1,0 +1,139 @@
+﻿@using Peacock.PEP.WeChat.Model.DTO;
+@using Peacock.PEP.WeChat.Model.Enum
+@{
+    Layout = null;
+    var chargeList = (IList<ChargeModel>)ViewBag.ChargeList;
+}
+@if (!chargeList.Any())
+{
+    <div class="no-data f-tc font_s_05">暂无流程跟踪数据</div>
+}
+else 
+{
+    foreach (var chargeModel in chargeList)
+    {
+        <div class="card">
+            <h2 class="card-title border">流程跟踪</h2>
+            <div class="card-body">
+                <div class="xm-kf">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td>报告号：</td>
+                            <td colspan="3" class="f-fwb">@chargeModel.ReportNo</td>
+                        </tr>
+                        <tr>
+                            <td>流水号：</td>
+                            <td colspan="3" class="f-fwb">@chargeModel.ProjectNo</td>
+                        </tr>
+                        <tr>
+                            <td width="25%">客户姓名：</td>
+                            <td width="25%" class="f-fwb">@chargeModel.CustomerName</td>
+                            <td width="25%">客户手机：</td>
+                            <td width="25%" class="f-fwb">@chargeModel.CustomerMobile</td>
+                        </tr>
+
+                        <tr>
+                            <td>项目类型：</td>
+                            <td class="f-fwb">@chargeModel.ItemType</td>
+                            <td>项目分类：</td>
+                            <td class="f-fwb">@chargeModel.ReportType</td>
+                        </tr>
+                        <tr>
+                            <td>建筑面积：</td>
+                            <td class="f-fwb">@string.Format("{0:F2}", chargeModel.BuildingArea)</td>
+                            <td>收费方式：</td>
+                            <td class="f-fwb">@chargeModel.PaymentType</td>
+                        </tr>
+                        <tr>
+                            <td>最低收费：</td>
+                            <td class="f-fwb">@string.Format("{0:F2}", chargeModel.StandardFee)</td>
+                            <td>应收金额：</td>
+                            <td class="f-fwb">@string.Format("{0:F2}", chargeModel.AdjustFee)</td>
+                        </tr>
+                        <tr>
+                            <td>项目地址：</td>
+                            <td colspan="3" class="f-fwb">@chargeModel.ResidentialAreaAddress</td>
+                        </tr>
+                        <tr>
+                            <td>看房联系人：</td>
+                            <td class="f-fwb">@chargeModel.Contacts</td>
+                            <td>看房联系人电话：</td>
+                            <td class="f-fwb">@chargeModel.ContactsPhone</td>
+                        </tr>
+                        @if (chargeModel.CurrentState >StateFlag.三审审核中.GetHashCode())
+                        {
+                            <tr>
+                                <td>评估总价：</td>
+                                <td class="f-fwb">@string.Format("{0:F2}",chargeModel.EvaluateTotal)万元</td>
+                                <td>评估单价：</td>
+                                <td class="f-fwb">@string.Format("{0:F2}",chargeModel.EvaluatePrice)元/㎡</td>
+                            </tr>
+                            <tr>
+                                <td>建筑面积：</td>
+                                <td class="f-fwb">@string.Format("{0:F2}",chargeModel.ArchitectureArea)㎡</td>
+                                <td>建成年代：</td>
+                                <td class="f-fwb">@string.Format("{0}",chargeModel.BuiltYear)</td>
+                            </tr>
+                        }
+                    </table>
+                </div>
+                <h2 class="card-title clear"><i class="fa fa-chevron-down pull-right"></i>跟进信息</h2>
+                @{
+                    IList<WorkFlowModel> flowList = chargeModel.FlowList;
+                    string maxStateTime = flowList.Max(x => x.StateTime);
+                    WorkFlowModel topRow = flowList.Where(x => x.StateTime == maxStateTime).FirstOrDefault();
+                    IList<WorkFlowModel> otherRows = flowList.Where(x => x.StateTime != maxStateTime).ToList();
+                }
+                @if (topRow != null)
+                {
+                    <div class="info">
+                        <p class="info-title">@topRow.Operator @string.Format("{0:yyyy-MM-dd HH:mm:ss}", topRow.StateTime)</p>
+                        <p class="info-body">
+                            <span class="pull-left md"> @topRow.Description</span>
+                            <span class="pull-left sm"> 状态：@topRow.Flag</span>
+                            <span class="clearfix"></span>
+                        </p>
+                    </div>
+                }
+                @if (otherRows != null)
+                {
+                    <div class="other">
+                        @foreach (var row in otherRows)
+                        {
+                            <div class="info">
+                                <p class="info-title">@row.Operator @string.Format("{0:yyyy-MM-dd HH:mm:ss}", row.StateTime)</p>
+                                <p class="info-body">
+                                    <span class="pull-left md"> @row.Description</span>
+                                    <span class="pull-left sm"> 状态：@row.Flag</span>
+                                    <span class="clearfix"></span>
+                                </p>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    <script type="text/javascript">
+        $(function () {
+            if ($(".card").length > 0) {
+                $(".card").each(function (i) {
+                    var _obj = $(".card").eq(i).find(".card-body .other .info");
+                    if (_obj.length > 0) {
+                        $(".card").eq(i).find(".card-body .other").hide();
+                    }
+                });
+            }
+
+            $(".card-title i").each(function () {
+                $(this).click(function () {
+                    if ($(this).parent().siblings(".other").has(".info").length > 0) {
+                        $(this).toggleClass("fa-chevron-up");
+                        $(this).parent().siblings(".other").toggle();
+                    }
+                });
+            });
+
+        })
+    </script>
+}

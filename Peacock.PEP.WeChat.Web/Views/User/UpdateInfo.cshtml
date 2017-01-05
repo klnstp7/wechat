@@ -1,0 +1,98 @@
+﻿@{
+    Layout = "~/Views/Shared/_Page.cshtml";
+}
+<script>
+    $(function () {
+        $("#BtnSubmit").click(Submit);
+        $("#BtnReSet").click(function () {
+            $("#oldpwd").val("");
+            $("#newpwd1").val("");
+            $("#newpwd2").val("");
+        });
+    })
+    $('.easyui-linkbutton').each(function () {
+        $(this).css({
+
+            width: 80,
+            height: 25,
+
+        });
+    });
+    $('input').each(function () {
+        $(this).css({
+
+            width: 80,
+            height: 25,
+
+        });
+    });
+    $('.tabmart').each(function () {
+        $(this).css({
+
+            'margin-top': 10,
+
+        });
+    });
+
+    function Submit() {
+        var oldpwd = $("#oldpwd").val();
+        var newpwd1 = $("#newpwd1").val();
+        var newpwd2 = $("#newpwd2").val();
+        if (oldpwd.IsNullOrEmpty()) {
+            alert("请输入旧密码");
+            return;
+        }
+        if (newpwd1.IsNullOrEmpty()) {
+            alert("请输入新密码");
+            return;
+        }
+        if (newpwd2.IsNullOrEmpty()) {
+            alert("请再次确认密码");
+            return;
+        }
+        if (newpwd1 != newpwd2) {
+            alert("2次输入密码不一致");
+            return;
+        }
+        if (oldpwd == newpwd1) {
+            alert("旧密码与新密码不能一样");
+            return;
+        }
+        loadTips.showLoading();
+        $.ajax({
+            url: "/User/UpdatePassWord",
+            data: { oldpwd: oldpwd, newpwd: newpwd1 },
+            success: function (data) {
+                alert(data.message);
+                parent.layer.closeAll();
+            },
+            error: function () {
+                loadTips.hideLoadind();
+            }
+        });
+    }
+
+</script>
+<form id="form1">
+    <table class="easyui-doc-table tabmart" width="400">
+        <tr>
+            <td class="f-tr md">旧密码:</td>
+            <td><input type="password" id="oldpwd" class="easyui-doc-textbox" /></td>
+        </tr>
+        <tr>
+            <td class="f-tr md">新密码:</td>
+            <td><input type="password" id="newpwd1" class="easyui-doc-textbox" /></td>
+        </tr>
+        <tr>
+            <td class="f-tr md">确认密码:</td>
+            <td><input type="password" id="newpwd2" class="easyui-doc-textbox" /></td>
+        </tr>
+        <tr>
+            <td class="f-tr md"></td>
+            <td>
+                <a href="javascript:void(0)" class="easyui-linkbutton" id="BtnSubmit" style=" width:60px; margin-right:10px !important;">修改</a>
+                <a href="javascript:void(0)" class="easyui-linkbutton" id="BtnReSet" style=" width:60px;">重置</a>
+            </td>
+        </tr>
+    </table>
+</form>
